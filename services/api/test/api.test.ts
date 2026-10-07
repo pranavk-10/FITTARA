@@ -3,7 +3,7 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { sessionStore } from '../src/store/session-store.js';
 
-describe('FIT3D Session & Privacy API Endpoints', () => {
+describe('FITTARA Session & Privacy API Endpoints', () => {
   const app = createApp();
 
   afterAll(() => {
@@ -14,7 +14,7 @@ describe('FIT3D Session & Privacy API Endpoints', () => {
     const res = await request(app).get('/v1/health');
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('healthy');
-    expect(res.body.product).toBe('FIT3D Engine');
+    expect(res.body.product).toBe('FITTARA Engine');
     expect(res.body.privacyAudit).toBe('STRICT_NO_PERSISTENT_DATA');
   });
 

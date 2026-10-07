@@ -3,66 +3,65 @@
 @layer base {
   :root {
     --font-heading: 'Syne', sans-serif;
-    --font-body: 'Outfit', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'Space Mono', monospace;
 
-    --background: 240 10% 2%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 4%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 4%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 210 100% 52%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 5% 12%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 240 4% 16%;
+    /* Restrained luxury palette: near-black, charcoal, off-white */
+    --background: 240 10% 3%;
+    --foreground: 0 0% 96%;
+    --card: 240 6% 6%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 6% 6%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 4% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 4% 11%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 240 4% 18%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 72% 51%;
+    --destructive: 0 65% 48%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 210 100% 52%;
-    --radius: 0.5rem;
+    --border: 240 4% 14%;
+    --input: 240 4% 14%;
+    --ring: 0 0% 90%;
+    --radius: 0.375rem;
   }
 }
 
 body {
   font-family: var(--font-body);
-  background-color: #050507;
-  color: #f4f4f5;
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(30, 58, 138, 0.12) 0%, transparent 60%),
-    radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.05) 0%, transparent 40%);
-  background-attachment: fixed;
+  background-color: #08080a;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
 }
 
 h1, h2, h3, h4, .font-heading {
   font-family: var(--font-heading);
+  letter-spacing: -0.025em;
 }
 
 .font-mono {
   font-family: var(--font-mono);
 }
 
-/* Glassmorphism panel utility */
-.glass-panel {
-  background: rgba(13, 14, 18, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+/* Restrained luxury cards and studio panels */
+.studio-card {
+  background: #0d0e12;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.glass-panel-subtle {
-  background: rgba(18, 20, 26, 0.55);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.studio-card-subtle {
+  background: #111318;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-/* Studio spotlight glow */
-.studio-glow {
-  box-shadow: 0 0 50px -10px rgba(56, 189, 248, 0.15);
+/* Editorial letterspacing */
+.tracking-editorial {
+  letter-spacing: 0.08em;
+}
+
+.tracking-hero {
+  letter-spacing: -0.035em;
 }

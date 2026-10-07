@@ -4,27 +4,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-sm text-xs font-medium tracking-wide uppercase transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.99] cursor-pointer',
   {
     variants: {
       variant: {
         default:
-          'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow hover:from-sky-400 hover:to-blue-500 shadow-sky-950/50',
+          'bg-[#f5f5f7] text-[#08080a] font-semibold hover:bg-white hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] shadow-sm',
         destructive:
-          'bg-red-950/50 text-red-400 border border-red-800/60 hover:bg-red-900/60 hover:text-red-200',
+          'bg-red-950/40 text-red-300 border border-red-900/50 hover:bg-red-900/50 hover:text-white',
         outline:
-          'border border-zinc-800 bg-zinc-950/60 hover:bg-zinc-900 hover:text-white text-zinc-300 backdrop-blur-sm',
+          'border border-zinc-800 bg-[#0d0e12]/80 hover:bg-zinc-800 hover:text-white text-zinc-300',
         secondary:
-          'bg-zinc-800 text-zinc-100 hover:bg-zinc-700/80 border border-zinc-700/40',
-        ghost: 'hover:bg-zinc-800/60 text-zinc-400 hover:text-zinc-100',
-        link: 'text-sky-400 underline-offset-4 hover:underline',
+          'bg-[#181920] text-zinc-200 hover:bg-[#22242e] border border-zinc-800/60',
+        ghost: 'hover:bg-zinc-900 text-zinc-400 hover:text-white',
+        link: 'text-zinc-200 underline-offset-4 hover:underline lowercase normal-case',
         editorial:
-          'bg-white text-black font-semibold hover:bg-zinc-200 tracking-wide uppercase text-xs px-6 py-3',
+          'bg-white text-black font-semibold hover:bg-zinc-200 tracking-editorial text-[11px] px-6 py-3',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-12 rounded-lg px-8 text-base font-semibold',
+        default: 'h-10 px-5 py-2.5',
+        sm: 'h-8 px-3.5 text-[11px]',
+        lg: 'h-12 px-8 text-xs font-semibold tracking-editorial',
         icon: 'h-9 w-9',
       },
     },

@@ -1,5 +1,5 @@
 /**
- * FIT3D Domain Types
+ * FITTARA Domain Types
  * Privacy-first, True-3D Virtual Fitting Room
  */
 

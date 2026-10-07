@@ -1,41 +1,51 @@
-# FIT3D — Privacy-First True-3D Virtual Fitting Room
+# FITTARA
 
-> **"Try the fit before you try the room."**
+> **"See the fit. Before you wear it."**  
+> *Your body. Your clothes. Your fit. In 3D.*  
+> *Virtual fitting, reimagined.*
 
-FIT3D is an engineering-driven, privacy-first, true-3D virtual fitting room product.
-Unlike 2D generative AI image try-on solutions, FIT3D creates an interactive 3D human body representation, reconstructs/fits a simulation-ready 3D garment, executes cloth collision physics, and presents the fitted result in a WebGPU/WebGL2 browser viewport.
+FITTARA is a privacy-first, true-3D virtual fitting room powered by parametric body reconstruction, garment template reconstruction, and physics-based cloth collision simulation.
+Unlike 2D generative image try-on solutions, FITTARA constructs a real 3D human body representation, tailors a simulation-ready 3D garment, executes cloth collision physics, and renders the result in a WebGPU/WebGL2 browser viewport for complete 360° inspection.
 
 ---
 
-## 1. Non-Negotiable Product Principles
+## 1. Project Identity & Metadata
+
+- **Product Name:** FITTARA
+- **Description:** FITTARA — A privacy-first 3D virtual fitting room powered by body reconstruction, garment reconstruction, and physics-based cloth simulation.
+- **Topics:** `3d`, `virtual-try-on`, `virtual-fitting`, `computer-vision`, `threejs`, `react-three-fiber`, `webgpu`, `cloth-simulation`, `fashion-tech`, `computer-graphics`, `typescript`, `privacy-first`
+
+---
+
+## 2. Non-Negotiable Product Principles
 
 - **True 3D Interactive Viewport:** Never a sequence of 2D images. Full 360° rotation, orbit, zoom, and fit inspection from any angle.
-- **Privacy-First & Ephemeral by Design:** No persistent consumer account required. No biometric profiles stored. All uploaded photos, measurements, and generated meshes exist solely for the active temporary session.
+- **Private by Design:** No persistent consumer account required. No biometric profiles stored. All uploaded photos, measurements, and generated meshes exist solely for the active temporary session.
 - **Truthful Guarantees:** Never claim "data never exists anywhere." The accurate guarantee is: *"Your fitting data is temporary and is automatically destroyed when your session ends or expires."*
 - **Authoritative Server-Side TTL:** Browser unload (`pagehide`/`beforeunload`) attempts best-effort deletion, but an automated server-side TTL cleaner (default 15 minutes) is the authoritative backstop.
-- **Strict Data Sanitization:** Sensitive fitting data (body images, face images, measurements, raw meshes) is blocked from application logs, metrics, CDN caches, and persistent databases.
+- **Strict Data Minimization:** Sensitive fitting data (body images, face images, measurements, raw meshes) is blocked from application logs, metrics, CDN caches, and persistent databases.
 
 ---
 
-## 2. Monorepo Architecture
+## 3. Monorepo Architecture
 
 ```
-/
+fittara/
 ├── apps/
-│   └── web/                   # React 19 + Vite + Tailwind CSS + Watermelon UI + R3F + Three.js
+│   └── web/                   # Vite + React 19 + Tailwind CSS + Watermelon UI + R3F + Three.js
 ├── services/
-│   └── api/                   # Express REST API + Ephemeral Session Store + TTL Garbage Collector
+│   └── api/                   # Express REST service + Ephemeral Session Store + TTL Garbage Collector
 ├── packages/
 │   ├── types/                 # Shared TypeScript domain types and schemas
 │   └── validation/            # Zod input validation schemas for all endpoints
-├── docs/                      # Product Requirements, Architecture, UX, and AI Pipeline specs
+├── docs/                      # Founding PRD & Architecture specifications
 ├── .env.example               # Environment configuration template
 └── tsconfig.base.json         # Base TypeScript configuration
 ```
 
 ---
 
-## 3. Quick Start & Development Setup
+## 4. Quick Start & Development Setup
 
 ### Prerequisites
 - **Node.js**: `>= 20.0.0` (Tested on Node v24.20.0)
@@ -64,11 +74,11 @@ npm run dev
 
 #### Or run independently:
 
-- **API Service** (Port 3001):
+- **FITTARA API Service** (Port 3001):
   ```bash
   npm run dev:api
   ```
-- **Web Frontend** (Port 3000):
+- **FITTARA Web Studio** (Port 3000):
   ```bash
   npm run dev:web
   ```
@@ -77,11 +87,11 @@ Visit **http://localhost:3000** in your browser.
 
 ---
 
-## 4. API Endpoints
+## 5. API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/v1/health` | Operational health check (non-sensitive metrics) |
+| `GET` | `/v1/health` | Operational health check (`product: FITTARA Engine`) |
 | `POST` | `/v1/sessions` | Initialize new temporary session with 15m TTL |
 | `POST` | `/v1/sessions/:id/body-input` | Submit validated body measurements & optional calibration image |
 | `POST` | `/v1/sessions/:id/face` | Submit optional face likeness with explicit consent |
@@ -95,7 +105,7 @@ Visit **http://localhost:3000** in your browser.
 
 ---
 
-## 5. Testing & Verification
+## 6. Testing & Verification
 
 Run the test suite across workspaces:
 
@@ -115,6 +125,6 @@ npm run build
 
 ---
 
-## 6. License & Privacy Compliance
+## 7. License & Privacy Compliance
 
 MIT License. Designed with privacy-by-design principles compliant with GDPR Article 17 (Right to Erasure) and CCPA biometric minimization principles.

@@ -6,7 +6,7 @@ export const healthRouter = Router();
 healthRouter.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'healthy',
-    product: 'FIT3D Engine',
+    product: 'FITTARA Engine',
     uptimeSeconds: Math.floor(process.uptime()),
     activeEphemeralSessions: sessionStore.getActiveCount(),
     privacyAudit: 'STRICT_NO_PERSISTENT_DATA',

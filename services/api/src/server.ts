@@ -5,7 +5,7 @@ const app = createApp();
 
 const server = app.listen(config.port, () => {
   console.log(`=======================================================`);
-  console.log(`🚀 FIT3D Engine API listening on http://localhost:${config.port}`);
+  console.log(`🚀 FITTARA Engine API listening on http://localhost:${config.port}`);
   console.log(`🔒 Privacy Policy: Strict Ephemeral Sessions with TTL`);
   console.log(`⏱️ Session TTL: ${config.sessionTtlSeconds}s | GC Interval: ${config.cleanupIntervalSeconds}s`);
   console.log(`=======================================================`);

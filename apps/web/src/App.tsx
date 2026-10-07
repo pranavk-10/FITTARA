@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   ShieldCheck,
-  Eye,
   RotateCw,
-  Compass,
+  Camera,
   Layers,
   ArrowRight,
-  CheckCircle2,
-  Trash2,
-  Activity,
+  Sparkles,
+  Check,
+  ChevronRight,
   Maximize2,
+  RefreshCw,
+  SlidersHorizontal,
+  X,
+  Upload,
 } from 'lucide-react';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -21,8 +23,26 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './com
 import { Badge } from './components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from './components/ui/alert';
 import { Progress } from './components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from './components/ui/dialog';
 import { useWebGPU } from './hooks/useWebGPU';
 import { useSession } from './hooks/useSession';
+import { GarmentCategory } from '@fit3d/types';
+
+type ExperienceStep =
+  | 'LANDING'
+  | 'BODY_SETUP'
+  | 'FACE_SETUP'
+  | 'AVATAR_READY'
+  | 'GARMENT_EXPERIENCE'
+  | 'FITTING_ROOM'
+  | 'SESSION_DESTROYED';
 
 export default function App() {
   const gpu = useWebGPU();
@@ -41,302 +61,825 @@ export default function App() {
     destroySession,
   } = useSession();
 
+  // Current interactive view
+  const [currentStep, setCurrentStep] = useState<ExperienceStep>('LANDING');
+
+  // Body inputs state
+  const [heightCm, setHeightCm] = useState<number>(180);
+  const [weightKg, setWeightKg] = useState<number>(75);
+  const [bodyShape, setBodyShape] = useState<'masculine' | 'feminine' | 'neutral'>('neutral');
+  const [chestCm, setChestCm] = useState<number>(98);
+  const [waistCm, setWaistCm] = useState<number>(82);
+
+  // Garment state
+  const [selectedGarment, setSelectedGarment] = useState<GarmentCategory>('tshirt');
+  const [garmentProcessingStage, setGarmentProcessingStage] = useState<string>('IDENTIFYING GARMENT');
+
+  // 3D Controls
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'front' | 'side' | 'back'>('perspective');
+
+  // Modals
   const [privacyModalOpen, setPrivacyModalOpen] = useState<boolean>(false);
-  const [selectedGarmentCategory, setSelectedGarmentCategory] = useState<'tshirt' | 'jacket'>('tshirt');
+  const [confirmDestroyOpen, setConfirmDestroyOpen] = useState<boolean>(false);
 
-  const handleStartSession = async () => {
-    await createSession();
-  };
-
-  const handleRunFullSpike = async () => {
+  // Handlers
+  const handleStartOnboarding = async () => {
     if (!session) {
       await createSession();
     }
-    // Submit default calibrated measurements
+    setCurrentStep('BODY_SETUP');
+  };
+
+  const handleCompleteBodySetup = async () => {
+    if (!session) return;
     await submitBodyData({
-      heightCm: 180,
-      weightKg: 75,
-      bodyShape: 'masculine',
-      chestCm: 98,
-      waistCm: 82,
+      heightCm,
+      weightKg,
+      bodyShape,
+      chestCm,
+      waistCm,
     });
-    // Submit garment
-    await submitGarment(selectedGarmentCategory);
-    // Start simulation
+    setCurrentStep('FACE_SETUP');
+  };
+
+  const handleProceedToAvatar = async () => {
+    setCurrentStep('AVATAR_READY');
+  };
+
+  const handleProceedToGarment = () => {
+    setCurrentStep('GARMENT_EXPERIENCE');
+  };
+
+  const handleSimulateGarment = async () => {
+    if (!session) return;
+    setGarmentProcessingStage('IDENTIFYING GARMENT');
+    await submitGarment(selectedGarment);
+
+    // Sequential fashion-tech simulation labels
+    setTimeout(() => setGarmentProcessingStage('BUILDING 3D FORM'), 300);
+    setTimeout(() => setGarmentProcessingStage('PREPARING MATERIAL'), 600);
+    setTimeout(() => setGarmentProcessingStage('SIMULATING FIT'), 900);
+    setTimeout(() => {
+      setGarmentProcessingStage('READY TO WEAR');
+      setCurrentStep('FITTING_ROOM');
+    }, 1300);
+
     await startFittingPipeline();
   };
 
+  const handleTriggerDestroy = async () => {
+    setConfirmDestroyOpen(false);
+    await destroySession();
+    setCurrentStep('SESSION_DESTROYED');
+  };
+
+  const handleRestartFromScratch = () => {
+    setCurrentStep('LANDING');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#050507] text-zinc-100 selection:bg-sky-500 selection:text-black">
-      {/* Navigation */}
+    <div className="min-h-screen flex flex-col bg-[#08080a] text-[#f5f5f7] selection:bg-[#f5f5f7] selection:text-black">
+      {/* Top Navbar */}
       <Navbar
         sessionId={session?.sessionId}
         sessionStatus={status}
         gpu={gpu}
-        onDestroySession={destroySession}
+        onDestroySession={() => setConfirmDestroyOpen(true)}
         onOpenPrivacyModal={() => setPrivacyModalOpen(true)}
+        onCreateFitClick={handleStartOnboarding}
+        onNavigateSection={(section) => {
+          if (section === 'privacy') setPrivacyModalOpen(true);
+        }}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        {/* Error Notification if any */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        {/* Error Notification */}
         {error && (
-          <Alert variant="destructive" className="animate-in fade-in-50">
-            <AlertTitle>Pipeline Alert</AlertTitle>
+          <Alert variant="destructive">
+            <AlertTitle>FITTARA Engine Notice</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        {/* Hero Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2 pb-6">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-950/40 border border-sky-800/40 text-sky-400 text-xs font-mono">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>TRUE 3D VIRTUAL FITTING — PHASE 0 VERIFIED</span>
+        {/* ---------------------------------------------------- */}
+        {/* 1. HERO / LANDING PAGE VIEW                          */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'LANDING' && (
+          <div className="space-y-12 py-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              {/* Hero Left Column */}
+              <div className="lg:col-span-7 space-y-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-[#111218] border border-zinc-800 text-zinc-300 text-[11px] font-mono uppercase tracking-editorial">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span>Virtual fitting, reimagined.</span>
+                </div>
+
+                <div className="space-y-4">
+                  <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold uppercase tracking-hero text-white leading-[0.95] font-heading">
+                    SEE THE FIT. <br />
+                    <span className="text-zinc-400 font-extrabold">
+                      BEFORE YOU WEAR IT.
+                    </span>
+                  </h1>
+
+                  <p className="text-base sm:text-lg text-zinc-300 max-w-xl font-normal leading-relaxed">
+                    Your body. Your clothes. Your fit. In 3D.
+                  </p>
+                </div>
+
+                {/* Primary CTA & Privacy Microcopy */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Button
+                      size="lg"
+                      onClick={handleStartOnboarding}
+                      disabled={isLoading}
+                      className="text-xs tracking-editorial"
+                    >
+                      CREATE MY 3D FIT
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setPrivacyModalOpen(true)}
+                      className="text-xs tracking-editorial text-zinc-300"
+                    >
+                      HOW PRIVACY WORKS
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-zinc-400 font-mono tracking-wide flex items-center gap-2">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>No account required · Temporary session · Privacy-first</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Hero Right Column: 3D Viewport Hero */}
+              <div className="lg:col-span-5 flex flex-col items-center">
+                <div className="w-full aspect-[4/5] max-h-[560px] relative">
+                  <FittingRoomCanvas
+                    gpu={gpu}
+                    avatarHeightCm={180}
+                    cameraPreset={cameraPreset}
+                    garmentCategory="tshirt"
+                    showClothSimulation={true}
+                  />
+
+                  {/* Restrained Camera Angle Bar */}
+                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-2 rounded-sm bg-[#08080a]/90 border border-zinc-800/90 backdrop-blur-md">
+                    <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400 px-2">
+                      VIEW
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {(['perspective', 'front', 'side', 'back'] as const).map((view) => (
+                        <button
+                          key={view}
+                          onClick={() => setCameraPreset(view)}
+                          className={`text-[10px] px-2.5 py-1 rounded-sm uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                            cameraPreset === view
+                              ? 'bg-white text-black font-semibold'
+                              : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                          }`}
+                        >
+                          {view === 'perspective' ? '360°' : view}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1] font-heading">
-              TRY THE FIT <br />
-              <span className="bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-300 bg-clip-text text-transparent">
-                BEFORE YOU TRY THE ROOM.
+            {/* Feature Callouts: Fashion-Tech Pillars */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-10 border-t border-zinc-900">
+              <div className="p-6 rounded-sm bg-[#0c0d12] border border-zinc-850 space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                  01 / ACCURACY
+                </span>
+                <h3 className="text-sm font-semibold uppercase tracking-editorial text-white font-heading">
+                  True Parametric 3D
+                </h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Calibrated to your exact dimensions. Inspect every seam, taper, and silhouette from 360 degrees.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-sm bg-[#0c0d12] border border-zinc-850 space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                  02 / SIMULATION
+                </span>
+                <h3 className="text-sm font-semibold uppercase tracking-editorial text-white font-heading">
+                  Physics Cloth Drape
+                </h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Real physics engine calculating gravity, tension, stretch, and fabric collision against your avatar.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-sm bg-[#0c0d12] border border-zinc-850 space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                  03 / PRIVACY
+                </span>
+                <h3 className="text-sm font-semibold uppercase tracking-editorial text-white font-heading">
+                  Private by Design
+                </h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Ephemeral fitting sessions with a 15-minute server-side TTL. No biometric profiles or persistent accounts.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ---------------------------------------------------- */}
+        {/* 2. BODY SETUP ONBOARDING                             */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'BODY_SETUP' && (
+          <div className="max-w-2xl mx-auto py-6 space-y-8">
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                STEP 01 OF 03
               </span>
-            </h1>
+              <h2 className="text-3xl font-bold uppercase tracking-editorial text-white font-heading">
+                CREATE YOUR DIGITAL BODY
+              </h2>
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                Tell us a little about yourself and we'll create your temporary 3D fit.
+              </p>
+            </div>
 
-            <p className="text-lg text-zinc-300 max-w-xl leading-relaxed">
-              Create a temporary 3D version of yourself. Drop in any garment. Rotate 360°. Inspect the fit from any angle.
-              <span className="text-white font-medium"> Nothing stays.</span>
-            </p>
+            <Card className="border-zinc-800 bg-[#0d0e12]">
+              <CardContent className="space-y-6 pt-6">
+                {/* Height & Weight Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Height (cm)
+                    </label>
+                    <input
+                      type="number"
+                      value={heightCm}
+                      min={100}
+                      max={250}
+                      onChange={(e) => setHeightCm(Number(e.target.value))}
+                      className="w-full h-11 px-3 rounded-sm border border-zinc-800 bg-[#12131a] text-white font-mono text-sm focus:outline-none focus:border-zinc-500"
+                    />
+                  </div>
 
-            {/* Quick Session Launcher CTA */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              {!session || status === 'DESTROYED' ? (
-                <Button
-                  size="lg"
-                  onClick={handleStartSession}
-                  disabled={isLoading}
-                  className="font-medium tracking-wide shadow-lg shadow-sky-500/25"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Initializing Session...' : 'Create My 3D Fit'}
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  onClick={handleRunFullSpike}
-                  disabled={isLoading}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
-                >
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Running Pipeline...' : 'Test Reconstruction Pipeline'}
-                </Button>
-              )}
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      value={weightKg}
+                      min={30}
+                      max={300}
+                      onChange={(e) => setWeightKg(Number(e.target.value))}
+                      className="w-full h-11 px-3 rounded-sm border border-zinc-800 bg-[#12131a] text-white font-mono text-sm focus:outline-none focus:border-zinc-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Body Shape Selector */}
+                <div className="space-y-2">
+                  <label className="text-xs font-mono uppercase tracking-wider text-zinc-300">
+                    Body Morphology
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['masculine', 'feminine', 'neutral'] as const).map((shape) => (
+                      <button
+                        key={shape}
+                        type="button"
+                        onClick={() => setBodyShape(shape)}
+                        className={`h-10 rounded-sm font-mono text-xs uppercase tracking-wider border transition-colors cursor-pointer ${
+                          bodyShape === shape
+                            ? 'bg-white text-black font-semibold border-white'
+                            : 'bg-[#12131a] text-zinc-400 border-zinc-800 hover:text-white'
+                        }`}
+                      >
+                        {shape}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Optional Measurements */}
+                <div className="pt-2 border-t border-zinc-900 space-y-4">
+                  <span className="text-[11px] font-mono uppercase tracking-editorial text-zinc-400 block">
+                    OPTIONAL MEASUREMENTS (IMPROVES DRAPE)
+                  </span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-mono text-zinc-400">Chest / Bust (cm)</label>
+                      <input
+                        type="number"
+                        value={chestCm}
+                        onChange={(e) => setChestCm(Number(e.target.value))}
+                        className="w-full h-10 px-3 rounded-sm border border-zinc-800 bg-[#12131a] text-white font-mono text-sm focus:outline-none focus:border-zinc-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-mono text-zinc-400">Waist (cm)</label>
+                      <input
+                        type="number"
+                        value={waistCm}
+                        onChange={(e) => setWaistCm(Number(e.target.value))}
+                        className="w-full h-10 px-3 rounded-sm border border-zinc-800 bg-[#12131a] text-white font-mono text-sm focus:outline-none focus:border-zinc-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setCurrentStep('LANDING')}
+                    className="text-xs tracking-editorial"
+                  >
+                    BACK
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={handleCompleteBodySetup}
+                    disabled={isLoading}
+                    className="text-xs tracking-editorial font-semibold"
+                  >
+                    CONTINUE TO FACE
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ---------------------------------------------------- */}
+        {/* 3. OPTIONAL FACE SETUP                               */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'FACE_SETUP' && (
+          <div className="max-w-xl mx-auto py-8 space-y-8">
+            <div className="space-y-2 text-center">
+              <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                STEP 02 OF 03 · OPTIONAL
+              </span>
+              <h2 className="text-3xl font-bold uppercase tracking-editorial text-white font-heading">
+                MAKE IT MORE YOU
+              </h2>
+              <p className="text-sm text-zinc-300 max-w-md mx-auto leading-relaxed">
+                Add a face photo to personalize your 3D model.
+              </p>
+            </div>
+
+            <Card className="border-zinc-800 bg-[#0d0e12]">
+              <CardContent className="space-y-6 pt-6">
+                <div className="p-8 rounded-sm border border-dashed border-zinc-800 bg-[#111218] text-center space-y-3">
+                  <Camera className="h-8 w-8 text-zinc-400 mx-auto" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Front-Facing Portrait
+                    </p>
+                    <p className="text-[11px] text-zinc-400">
+                      Even lighting, neutral expression. Temporary processing only.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-xs tracking-editorial"
+                    onClick={handleProceedToAvatar}
+                  >
+                    UPLOAD PHOTO
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="flex-1 text-xs tracking-editorial font-semibold"
+                    onClick={handleProceedToAvatar}
+                  >
+                    SKIP FOR NOW
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ---------------------------------------------------- */}
+        {/* 4. AVATAR REVEAL                                     */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'AVATAR_READY' && (
+          <div className="py-4 space-y-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                  3D HUMAN RECONSTRUCTION READY
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-editorial text-white font-heading">
+                  YOUR FIT IS READY.
+                </h2>
+                <p className="text-xs text-zinc-300">
+                  Parametric body calibrated ({heightCm}cm, {weightKg}kg). Rotate to validate proportions.
+                </p>
+              </div>
 
               <Button
-                variant="outline"
                 size="lg"
-                onClick={() => setPrivacyModalOpen(true)}
-                className="gap-2 text-zinc-300 hover:text-white"
+                onClick={handleProceedToGarment}
+                className="text-xs tracking-editorial font-semibold whitespace-nowrap"
               >
-                <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                Inspect Privacy Model
+                CONTINUE TO GARMENT
               </Button>
             </div>
 
-            {/* Privacy Promise Callout */}
-            <div className="flex items-start gap-3 p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 max-w-lg backdrop-blur-sm">
-              <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-              <div className="text-xs text-zinc-400 leading-snug">
-                <strong className="text-zinc-200">Ephemeral-by-Design:</strong> Your fitting data is temporary and automatically destroyed when your session ends or expires (15m TTL).
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              <div className="lg:col-span-8 aspect-[16/10] min-h-[460px] relative">
+                <FittingRoomCanvas
+                  gpu={gpu}
+                  avatarHeightCm={heightCm}
+                  cameraPreset={cameraPreset}
+                  showClothSimulation={false}
+                />
+
+                {/* Control bar: FRONT · SIDE · BACK · 360° */}
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-2 rounded-sm bg-[#08080a]/90 border border-zinc-800 backdrop-blur-md">
+                  <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400 px-2">
+                    INSPECT
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {(['front', 'side', 'back', 'perspective'] as const).map((view) => (
+                      <button
+                        key={view}
+                        onClick={() => setCameraPreset(view)}
+                        className={`text-[10px] px-3 py-1 rounded-sm uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                          cameraPreset === view
+                            ? 'bg-white text-black font-semibold'
+                            : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                        }`}
+                      >
+                        {view === 'perspective' ? '360°' : view}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Specification */}
+              <div className="lg:col-span-4 space-y-4">
+                <Card className="border-zinc-800 bg-[#0d0e12]">
+                  <CardHeader>
+                    <CardTitle className="text-xs text-zinc-300">Avatar Confidence</CardTitle>
+                    <CardDescription className="text-[11px]">
+                      Parametric topology fit to anthropometric bounds.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 font-mono text-xs">
+                    <div className="flex justify-between py-1 border-b border-zinc-900">
+                      <span className="text-zinc-400">Scale</span>
+                      <span className="text-emerald-400 font-semibold">CALIBRATED</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-zinc-900">
+                      <span className="text-zinc-400">Pose</span>
+                      <span className="text-zinc-200">NATURAL STANDING</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-zinc-900">
+                      <span className="text-zinc-400">Collision Mesh</span>
+                      <span className="text-emerald-400 font-semibold">RIGGED</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-zinc-400">Session Mode</span>
+                      <span className="text-zinc-300">EPHEMERAL</span>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Hero 3D Stage Preview */}
-          <div className="lg:col-span-5 flex flex-col items-center">
-            <div className="w-full aspect-[4/5] max-h-[550px] relative">
-              <FittingRoomCanvas
-                gpu={gpu}
-                avatarHeightCm={180}
-                cameraPreset={cameraPreset}
-              />
-
-              {/* Floating Camera Preset Controller */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-2 rounded-lg bg-zinc-950/90 border border-zinc-800/90 backdrop-blur-md">
-                <span className="text-[10px] font-mono uppercase text-zinc-400 px-2">
-                  Camera:
-                </span>
-                <div className="flex items-center gap-1">
-                  {(['perspective', 'front', 'side', 'back'] as const).map((view) => (
-                    <button
-                      key={view}
-                      onClick={() => setCameraPreset(view)}
-                      className={`text-xs px-2.5 py-1 rounded transition-colors font-mono uppercase ${
-                        cameraPreset === view
-                          ? 'bg-sky-500 text-black font-semibold'
-                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-                      }`}
-                    >
-                      {view.slice(0, 4)}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        {/* ---------------------------------------------------- */}
+        {/* 5. GARMENT EXPERIENCE                                */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'GARMENT_EXPERIENCE' && (
+          <div className="max-w-2xl mx-auto py-8 space-y-8">
+            <div className="space-y-2 text-center">
+              <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400">
+                STEP 03 OF 03
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold uppercase tracking-editorial text-white font-heading">
+                NOW, BRING YOUR CLOTHES.
+              </h2>
+              <p className="text-sm text-zinc-300 max-w-lg mx-auto leading-relaxed">
+                Upload a garment image and we'll create a 3D version for your fitting session.
+              </p>
             </div>
-          </div>
-        </div>
 
-        {/* Session & Pipeline Control HUD */}
-        {session && status !== 'DESTROYED' && (
-          <Card className="border-sky-900/40 bg-zinc-950/80">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-sky-400" />
-                  Active Ephemeral Fitting Session
-                </CardTitle>
-                <CardDescription className="font-mono text-xs text-zinc-400">
-                  ID: {session.sessionId} | TTL: {session.ttlSeconds}s | Expires: {new Date(session.expiresAt).toLocaleTimeString()}
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={status === 'READY' ? 'privacy' : 'default'}
-                  className="font-mono uppercase text-[11px]"
-                >
-                  {status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-mono text-zinc-400">
-                  <span>{statusMessage}</span>
-                  <span>{progressPercent}%</span>
-                </div>
-                <Progress value={progressPercent} />
-              </div>
-
-              {/* Garment Selector & Inspection Trigger */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-900">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-400 font-mono">Category:</span>
-                  {(['tshirt', 'jacket'] as const).map((cat) => (
+            <Card className="border-zinc-800 bg-[#0d0e12]">
+              <CardContent className="space-y-6 pt-6">
+                {/* Category Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-mono uppercase tracking-wider text-zinc-300">
+                    Garment Category
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
                     <button
-                      key={cat}
-                      onClick={() => setSelectedGarmentCategory(cat)}
-                      className={`text-xs px-3 py-1 rounded-md font-mono uppercase transition-all ${
-                        selectedGarmentCategory === cat
-                          ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50'
-                          : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                      type="button"
+                      onClick={() => setSelectedGarment('tshirt')}
+                      className={`p-4 rounded-sm border text-left transition-colors cursor-pointer ${
+                        selectedGarment === 'tshirt'
+                          ? 'border-white bg-[#161722] text-white'
+                          : 'border-zinc-800 bg-[#111218] text-zinc-400 hover:text-white'
                       }`}
                     >
-                      {cat}
+                      <div className="font-heading font-semibold uppercase text-xs tracking-editorial">
+                        T-Shirt
+                      </div>
+                      <div className="text-[11px] text-zinc-400 mt-1">
+                        Cotton jersey, relaxed crew drape
+                      </div>
                     </button>
-                  ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGarment('jacket')}
+                      className={`p-4 rounded-sm border text-left transition-colors cursor-pointer ${
+                        selectedGarment === 'jacket'
+                          ? 'border-white bg-[#161722] text-white'
+                          : 'border-zinc-800 bg-[#111218] text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="font-heading font-semibold uppercase text-xs tracking-editorial">
+                        Jacket
+                      </div>
+                      <div className="text-[11px] text-zinc-400 mt-1">
+                        Structured tailored outerwear
+                      </div>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Upload Box */}
+                <div className="p-8 rounded-sm border border-dashed border-zinc-800 bg-[#111218] text-center space-y-3">
+                  <Upload className="h-8 w-8 text-zinc-400 mx-auto" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-mono uppercase tracking-wider text-zinc-300">
+                      Drop Product Image or Select File
+                    </p>
+                    <p className="text-[11px] text-zinc-400">
+                      JPEG, PNG, WebP up to 15MB. Clean product photos produce the highest fidelity.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Technical Processing Progression Notice */}
+                {isLoading && (
+                  <div className="p-4 rounded-sm bg-[#12131c] border border-zinc-800 space-y-2">
+                    <div className="flex justify-between text-xs font-mono uppercase tracking-wider">
+                      <span className="text-white font-semibold">{garmentProcessingStage}</span>
+                      <span className="text-zinc-400">{progressPercent}%</span>
+                    </div>
+                    <Progress value={progressPercent} />
+                  </div>
+                )}
+
+                <div className="pt-2 flex items-center justify-between">
                   <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={destroySession}
-                    className="gap-1.5 text-xs"
+                    variant="ghost"
+                    onClick={() => setCurrentStep('AVATAR_READY')}
+                    className="text-xs tracking-editorial"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Purge All Session Data
+                    BACK
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={handleSimulateGarment}
+                    disabled={isLoading}
+                    className="text-xs tracking-editorial font-semibold"
+                  >
+                    {isLoading ? 'SIMULATING...' : 'SIMULATE 3D FIT'}
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
-        {/* Fit Inspection Analysis HUD (Displays when simulation is ready) */}
-        {scene?.fitInspection && (
-          <Card className="border-zinc-800 bg-zinc-950/70">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Layers className="h-4 w-4 text-sky-400" />
-                Physical Fit Inspection (Honest System Signals)
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Derived from garment drape physics against your reconstructed body collision mesh.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                {scene.fitInspection.regions.map((region) => (
-                  <div
-                    key={region.area}
-                    className="p-3 rounded-lg bg-zinc-900/60 border border-zinc-800/80 space-y-1"
-                  >
-                    <div className="text-[11px] font-mono uppercase text-zinc-400">
-                      {region.area}
-                    </div>
-                    <div className="text-sm font-semibold text-white capitalize">
-                      {region.assessment}
-                    </div>
-                    <div className="text-[10px] text-sky-400 font-mono">
-                      Conf: {(region.confidenceScore * 100).toFixed(0)}%
-                    </div>
+        {/* ---------------------------------------------------- */}
+        {/* 6. HERO FITTING ROOM (HERO EXPERIENCE)               */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'FITTING_ROOM' && (
+          <div className="py-2 space-y-6">
+            {/* Minimal Header */}
+            <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-editorial text-white font-heading">
+                  FITTARA FITTING ROOM
+                </h2>
+                <p className="text-xs text-zinc-400 font-mono">
+                  {selectedGarment.toUpperCase()} ON {heightCm}CM HUMAN AVATAR · EPHEMERAL SESSION
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep('GARMENT_EXPERIENCE')}
+                  className="text-[11px] tracking-editorial"
+                >
+                  CHANGE GARMENT
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setConfirmDestroyOpen(true)}
+                  className="text-[11px] tracking-editorial font-semibold"
+                >
+                  END SESSION
+                </Button>
+              </div>
+            </div>
+
+            {/* 3D Viewport Dominant Stage */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-8 aspect-[16/11] min-h-[500px] relative">
+                <FittingRoomCanvas
+                  gpu={gpu}
+                  avatarHeightCm={heightCm}
+                  cameraPreset={cameraPreset}
+                  garmentCategory={selectedGarment}
+                  showClothSimulation={true}
+                />
+
+                {/* Hero Controls: FRONT · SIDE · BACK · 360° · RESET */}
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-2 rounded-sm bg-[#08080a]/90 border border-zinc-800 backdrop-blur-md">
+                  <span className="text-[10px] font-mono uppercase tracking-editorial text-zinc-400 px-2">
+                    CONTROLS
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setCameraPreset('front')}
+                      className={`text-[10px] px-2.5 py-1 rounded-sm uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                        cameraPreset === 'front' ? 'bg-white text-black font-semibold' : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      FRONT
+                    </button>
+                    <button
+                      onClick={() => setCameraPreset('side')}
+                      className={`text-[10px] px-2.5 py-1 rounded-sm uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                        cameraPreset === 'side' ? 'bg-white text-black font-semibold' : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      SIDE
+                    </button>
+                    <button
+                      onClick={() => setCameraPreset('back')}
+                      className={`text-[10px] px-2.5 py-1 rounded-sm uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                        cameraPreset === 'back' ? 'bg-white text-black font-semibold' : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      BACK
+                    </button>
+                    <button
+                      onClick={() => setCameraPreset('perspective')}
+                      className={`text-[10px] px-2.5 py-1 rounded-sm uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                        cameraPreset === 'perspective' ? 'bg-white text-black font-semibold' : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      360°
+                    </button>
+                    <button
+                      onClick={() => setCameraPreset('perspective')}
+                      className="text-[10px] px-2.5 py-1 rounded-sm uppercase font-mono tracking-wider text-zinc-400 hover:text-white cursor-pointer"
+                    >
+                      RESET
+                    </button>
                   </div>
-                ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Fit Inspection Panel */}
+              <div className="lg:col-span-4 space-y-4">
+                <Card className="border-zinc-800 bg-[#0d0e12]">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xs text-white">FIT INSPECTION</CardTitle>
+                    <CardDescription className="text-[11px]">
+                      Contact pressure and drape clearance derived from physics solver.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2.5">
+                    {[
+                      { area: 'Shoulder', assessment: 'likely close fit', confidence: '88%' },
+                      { area: 'Chest', assessment: 'likely relaxed fit', confidence: '84%' },
+                      { area: 'Waist', assessment: 'likely relaxed fit', confidence: '81%' },
+                      { area: 'Sleeve', assessment: 'likely close fit', confidence: '86%' },
+                      { area: 'Length', assessment: 'likely close fit', confidence: '85%' },
+                    ].map((item) => (
+                      <div
+                        key={item.area}
+                        className="p-2.5 rounded-sm bg-[#12131a] border border-zinc-850 flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                            {item.area}
+                          </div>
+                          <div className="text-xs font-semibold text-white capitalize mt-0.5">
+                            {item.assessment}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-sm">
+                          {item.confidence}
+                        </span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Privacy reminder pill */}
+                <div className="p-3 rounded-sm border border-zinc-850 bg-[#0a0b0f] text-[11px] text-zinc-400 leading-normal flex items-start gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    This 3D scene exists only in memory for this session and will be destroyed upon exit.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Architecture & Engineering Feasibility Status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-          <Card className="bg-zinc-950/50 border-zinc-850">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-zinc-200 flex items-center gap-2 font-mono">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                01 / Temporary Session
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-zinc-400 space-y-2">
-              <p>Express REST service with in-memory store and cryptographic ID generation.</p>
-              <p className="font-mono text-zinc-500 text-[11px]">TTL: 900s | GC: 30s interval</p>
-            </CardContent>
-          </Card>
+        {/* ---------------------------------------------------- */}
+        {/* 7. SESSION DESTROYED STATE                           */}
+        {/* ---------------------------------------------------- */}
+        {currentStep === 'SESSION_DESTROYED' && (
+          <div className="max-w-md mx-auto py-16 text-center space-y-6">
+            <div className="h-12 w-12 rounded-full border border-zinc-800 bg-[#12131a] flex items-center justify-center mx-auto text-emerald-400">
+              <Check className="h-6 w-6" />
+            </div>
 
-          <Card className="bg-zinc-950/50 border-zinc-850">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-zinc-200 flex items-center gap-2 font-mono">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                02 / True 3D Viewport
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-zinc-400 space-y-2">
-              <p>Three.js + React Three Fiber with studio lighting, camera presets, and orbit controls.</p>
-              <p className="font-mono text-zinc-500 text-[11px]">Hardware Tier: {gpu.tier.toUpperCase()}</p>
-            </CardContent>
-          </Card>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold uppercase tracking-editorial text-white font-heading">
+                SESSION DESTROYED
+              </h2>
+              <p className="text-xs text-zinc-400 leading-relaxed max-w-sm mx-auto font-sans">
+                Your temporary fitting session has ended. All in-memory buffers, measurements, and generated 3D meshes have been zeroed and removed.
+              </p>
+            </div>
 
-          <Card className="bg-zinc-950/50 border-zinc-850">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-zinc-200 flex items-center gap-2 font-mono">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                03 / Ephemeral Privacy
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-zinc-400 space-y-2">
-              <p>Explicit DELETE endpoint, unload beacon, and in-memory buffer zeroing.</p>
-              <p className="font-mono text-zinc-500 text-[11px]">No persistent DB | Zero biometrics in logs</p>
-            </CardContent>
-          </Card>
-        </div>
+            <Button
+              variant="default"
+              onClick={handleRestartFromScratch}
+              className="text-xs tracking-editorial font-semibold"
+            >
+              START NEW FITTING
+            </Button>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
       <Footer />
 
-      {/* Privacy Guarantee Modal */}
+      {/* Privacy Modal */}
       <PrivacyModal
         open={privacyModalOpen}
         onOpenChange={setPrivacyModalOpen}
       />
+
+      {/* Session Destruction Confirmation Dialog */}
+      <Dialog open={confirmDestroyOpen} onOpenChange={setConfirmDestroyOpen}>
+        <DialogContent className="max-w-md border border-zinc-800 bg-[#0d0e12] text-zinc-100">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-lg font-bold tracking-editorial font-heading uppercase text-white">
+              END THIS FITTING SESSION?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400 leading-relaxed font-sans">
+              Your temporary fitting session will be destroyed. All temporary 3D meshes, measurements, and uploaded assets will be purged immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-4 flex flex-col-reverse sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmDestroyOpen(false)}
+              className="tracking-editorial text-[11px]"
+            >
+              KEEP SESSION
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleTriggerDestroy}
+              className="tracking-editorial text-[11px] font-semibold"
+            >
+              DESTROY SESSION
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

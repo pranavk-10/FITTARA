@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Cpu, Trash2, Sparkles, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Cpu } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { GpuCapability } from '../../hooks/useWebGPU';
@@ -11,6 +11,8 @@ interface NavbarProps {
   gpu: GpuCapability;
   onDestroySession: () => void;
   onOpenPrivacyModal: () => void;
+  onCreateFitClick?: () => void;
+  onNavigateSection?: (sectionId: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,84 +21,97 @@ export const Navbar: React.FC<NavbarProps> = ({
   gpu,
   onDestroySession,
   onOpenPrivacyModal,
+  onCreateFitClick,
+  onNavigateSection,
 }) => {
+  const isSessionActive = Boolean(sessionId && sessionStatus !== 'DESTROYED');
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b border-zinc-900 bg-[#08080a]/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 shadow-md shadow-sky-500/20">
-            <Sparkles className="h-5 w-5 text-black font-bold" />
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-heading text-lg font-bold tracking-wider text-white">
-                FIT<span className="text-sky-400">3D</span>
-              </span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50">
-                v0.1-Alpha
-              </span>
-            </div>
-            <span className="text-[11px] text-zinc-400 hidden sm:inline">
-              True 3D Virtual Fitting Room
+        {/* Brand: Exactly FITTARA */}
+        <div className="flex items-center gap-8">
+          <a
+            href="/"
+            className="flex items-center gap-2 group"
+            aria-label="FITTARA Home"
+          >
+            <span className="font-heading text-lg font-bold tracking-editorial text-white uppercase group-hover:text-zinc-200 transition-colors">
+              FITTARA
             </span>
-          </div>
+          </a>
+
+          {/* Navigation Links: How it works · Technology · Privacy */}
+          {!isSessionActive && (
+            <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-editorial text-zinc-400">
+              <button
+                onClick={() => onNavigateSection?.('how-it-works')}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                How it works
+              </button>
+              <button
+                onClick={() => onNavigateSection?.('technology')}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Technology
+              </button>
+              <button
+                onClick={onOpenPrivacyModal}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Privacy
+              </button>
+            </nav>
+          )}
         </div>
 
-        {/* Status Badges & Controls */}
+        {/* Right Side: GPU tier, Privacy Pill, and Actions */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* GPU Hardware Capability Badge */}
-          <div className="hidden md:flex items-center">
+          {/* Subtle GPU Indicator */}
+          <div className="hidden lg:flex items-center">
             {gpu.tier === 'webgpu' ? (
-              <Badge variant="default" className="gap-1.5 py-1 bg-sky-950/40 border-sky-800/60 text-sky-300">
-                <Cpu className="h-3 w-3 text-sky-400" />
-                <span>WebGPU Active</span>
-              </Badge>
-            ) : gpu.tier === 'webgl2' ? (
-              <Badge variant="secondary" className="gap-1.5 py-1 text-zinc-300">
-                <Cpu className="h-3 w-3 text-zinc-400" />
-                <span>WebGL2 Fallback</span>
-              </Badge>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                WebGPU
+              </span>
             ) : (
-              <Badge variant="destructive" className="gap-1.5 py-1">
-                <AlertCircle className="h-3 w-3" />
-                <span>Software Raster</span>
-              </Badge>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                WebGL2
+              </span>
             )}
           </div>
 
-          {/* Privacy Guarantee Pill */}
+          {/* Privacy Pill */}
           <button
             onClick={onOpenPrivacyModal}
-            className="flex items-center gap-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 text-xs text-emerald-400 hover:bg-emerald-900/40 transition-colors font-mono cursor-pointer"
-            title="Click to view ephemeral privacy policy"
+            className="flex items-center gap-1.5 rounded-sm border border-zinc-800 bg-[#12131a] px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
+            title="Privacy-first temporary session"
           >
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">EPHEMERAL PRIVACY</span>
-            <span className="sm:hidden">PRIVATE</span>
+            <ShieldCheck className="h-3 w-3 text-emerald-400" />
+            <span>PRIVATE BY DESIGN</span>
           </button>
 
-          {/* Active Session & Destruction CTA */}
-          {sessionId && sessionStatus !== 'DESTROYED' ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-zinc-400 font-mono hidden lg:inline">
-                ID: {sessionId.slice(0, 8)}...
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={onDestroySession}
-                className="gap-1.5 text-xs h-8"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Destroy Session</span>
-                <span className="sm:hidden">End</span>
-              </Button>
-            </div>
+          {/* Primary Action / End Session CTA */}
+          {isSessionActive ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onDestroySession}
+              className="text-[11px] tracking-editorial font-semibold"
+            >
+              END SESSION
+            </Button>
           ) : (
-            <div className="text-xs text-zinc-500 font-mono hidden sm:inline">
-              NO ACTIVE SESSION
-            </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onCreateFitClick}
+              className="text-[11px] tracking-editorial font-semibold"
+            >
+              CREATE MY FIT
+            </Button>
           )}
         </div>
       </div>

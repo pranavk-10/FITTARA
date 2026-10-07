@@ -1,8 +1,8 @@
 {
-  "name": "fit3d-monorepo",
+  "name": "fittara-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "FIT3D — Privacy-first, True-3D Virtual Fitting Room",
+  "description": "FITTARA — A privacy-first 3D virtual fitting room powered by body reconstruction, garment reconstruction, and physics-based cloth simulation.",
   "workspaces": [
     "packages/*",
     "services/*",

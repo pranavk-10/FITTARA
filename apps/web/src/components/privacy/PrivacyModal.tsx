@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { ShieldCheck, Clock, Server, EyeOff, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Clock, EyeOff, Server, Check } from 'lucide-react';
 
 interface PrivacyModalProps {
   open: boolean;
@@ -18,77 +18,83 @@ interface PrivacyModalProps {
 export const PrivacyModal: React.FC<PrivacyModalProps> = ({ open, onOpenChange }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="p-2 rounded-lg bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <DialogTitle className="text-xl">FIT3D Privacy Architecture</DialogTitle>
+      <DialogContent className="max-w-lg border border-zinc-800 bg-[#0d0e12] text-zinc-100">
+        <DialogHeader className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 border border-emerald-900/50 bg-emerald-950/20 px-2 py-0.5 rounded-sm">
+              PRIVACY-FIRST
+            </span>
           </div>
-          <DialogDescription className="text-zinc-400">
-            Our commitment is technical, architectural, and truthful.
+          <DialogTitle className="text-xl font-bold tracking-editorial font-heading uppercase text-white">
+            PRIVATE BY DESIGN.
+          </DialogTitle>
+          <DialogDescription className="text-xs text-zinc-400 leading-relaxed font-sans">
+            Your fitting session is temporary. Your body information, images and generated fitting assets are automatically removed according to the session lifecycle.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 text-sm text-zinc-300">
-          <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/20 p-4">
-            <h4 className="text-sm font-semibold text-emerald-300 flex items-center gap-2 mb-1">
-              <CheckCircle className="h-4 w-4" />
-              The Truthful Guarantee
+        <div className="space-y-3 py-2 text-xs text-zinc-300">
+          <div className="p-3.5 rounded-sm bg-[#12141c] border border-zinc-800/80 space-y-1">
+            <h4 className="font-semibold text-white flex items-center gap-1.5 font-heading tracking-wide uppercase text-[11px]">
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+              The Accurate Product Guarantee
             </h4>
-            <p className="text-xs text-zinc-300 leading-relaxed">
-              "Your fitting data is temporary and is automatically destroyed when your session ends or expires."
-              We do not fabricate unrealistic claims such as "data never exists anywhere." Instead, data exists only transiently in worker memory for 3D reconstruction and physics simulation.
+            <p className="text-zinc-400 leading-relaxed text-[11px]">
+              We do not fabricate unrealistic claims such as "data never exists." Instead, temporary processing data exists transiently in worker memory only while generating your 3D avatar and cloth simulation, and is destroyed when your session ends or expires.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-3 space-y-1">
-              <span className="font-semibold text-white flex items-center gap-1.5 font-mono">
-                <Clock className="h-3.5 w-3.5 text-amber-400" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="p-3 rounded-sm bg-[#111218] border border-zinc-850 space-y-1">
+              <span className="font-semibold text-white flex items-center gap-1.5 font-mono text-[10px] uppercase">
+                <Clock className="h-3.5 w-3.5 text-zinc-400" />
                 15-Min TTL Backstop
               </span>
-              <p className="text-zinc-400">
-                Server-side garbage collection runs every 30s. If your tab closes or disconnects, all assets expire automatically.
+              <p className="text-zinc-400 text-[11px]">
+                Server-side TTL independently destroys expired assets if you close your browser.
               </p>
             </div>
 
-            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-3 space-y-1">
-              <span className="font-semibold text-white flex items-center gap-1.5 font-mono">
-                <EyeOff className="h-3.5 w-3.5 text-sky-400" />
-                Zero Persistent Database
+            <div className="p-3 rounded-sm bg-[#111218] border border-zinc-850 space-y-1">
+              <span className="font-semibold text-white flex items-center gap-1.5 font-mono text-[10px] uppercase">
+                <EyeOff className="h-3.5 w-3.5 text-zinc-400" />
+                Zero Persistent DB
               </span>
-              <p className="text-zinc-400">
-                No face databases. No user body profiles. No permanent object store. No persistent consumer accounts required.
+              <p className="text-zinc-400 text-[11px]">
+                No persistent biometric profile, user account, or permanent storage of photos.
               </p>
             </div>
 
-            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-3 space-y-1">
-              <span className="font-semibold text-white flex items-center gap-1.5 font-mono">
-                <Server className="h-3.5 w-3.5 text-indigo-400" />
+            <div className="p-3 rounded-sm bg-[#111218] border border-zinc-850 space-y-1">
+              <span className="font-semibold text-white flex items-center gap-1.5 font-mono text-[10px] uppercase">
+                <Server className="h-3.5 w-3.5 text-zinc-400" />
                 No Sensitive Logs
               </span>
-              <p className="text-zinc-400">
-                Request bodies containing images or measurements are blocked from application logs, metrics, and CDN caches.
+              <p className="text-zinc-400 text-[11px]">
+                Request bodies, measurements, and images are strictly blocked from telemetry.
               </p>
             </div>
 
-            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-3 space-y-1">
-              <span className="font-semibold text-white flex items-center gap-1.5 font-mono">
+            <div className="p-3 rounded-sm bg-[#111218] border border-zinc-850 space-y-1">
+              <span className="font-semibold text-white flex items-center gap-1.5 font-mono text-[10px] uppercase">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
                 Explicit Destruction
               </span>
-              <p className="text-zinc-400">
-                Clicking "Destroy Session" executes an immediate cryptographic wipe and buffer zeroing of all session data.
+              <p className="text-zinc-400 text-[11px]">
+                Ending your session immediately triggers zeroing and memory clearance.
               </p>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="default" onClick={() => onOpenChange(false)}>
-            I Understand
+        <DialogFooter className="pt-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto tracking-editorial text-[11px]"
+          >
+            I UNDERSTAND
           </Button>
         </DialogFooter>
       </DialogContent>
