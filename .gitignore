@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing and coverage
+coverage
+
+# Production and build outputs
+dist
+dist-ssr
+build
+*.local
+
+# Environment variables (privacy & security)
+.env
+.env.*
+!.env.example
+
+# Logs (strictly no sensitive fitting data)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Ephemeral runtime cache
+.cache
+tmp
+temp
+.temp
+
+# Editor & OS files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+Thumbs.db

@@ -1,0 +1,28 @@
+{
+  "name": "fit3d-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FIT3D — Privacy-first, True-3D Virtual Fitting Room",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm --workspace=@fit3d/api run dev",
+    "dev:web": "npm --workspace=@fit3d/web run dev",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
